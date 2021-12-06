@@ -85,16 +85,19 @@ class WordFunction(Function):
     def get_universe(self):
         if not hasattr(self, 'universe'):
             inner_fn_universe = None
-            assert len(self.inner_fns) > 0, "Function should be overridden for input-returning function"
-            for inner_fn in self.inner_fns:
-                if inner_fn_universe is None:
-                    inner_fn_universe = inner_fn.get_universe()
-                else:
-                    assert inner_fn_universe == inner_fn.get_universe()
-            self.universe = inner_fn_universe
-            if self.universe is None:
-                assert hasattr(self, 'lang')
-                self.universe = get_lang_vocab(self.lang)
+            if self.fn_tree.get_base_fn() == "wiki":
+                self.universe = self.domain()
+            else:
+                assert len(self.inner_fns) > 0, "Function should be overridden for input-returning function"
+                for inner_fn in self.inner_fns:
+                    if inner_fn_universe is None:
+                        inner_fn_universe = inner_fn.get_universe()
+                    else:
+                        assert inner_fn_universe == inner_fn.get_universe()
+                self.universe = inner_fn_universe
+                if self.universe is None:
+                    assert hasattr(self, 'lang')
+                    self.universe = get_lang_vocab(self.lang)
         return self.universe
 
     def get_cached_words_results(self, inputs: list=None):
@@ -131,5 +134,5 @@ from function.logical_ops import *
 from function.basic_atoms import *
 from function.wordnet_atoms import *
 from function.random_atoms import *
-# from function.wikidata_atoms import *
+from function.wikidata_fns import *
 from function.return_input import *

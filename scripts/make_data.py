@@ -9,15 +9,18 @@ import time
 from function import Function
 import random
 from function.utils import parse_to_function_tree, make_sampler_from_function, convert_relation_to_nl
+from function import WikidataEntity, GetWikiRelatedWords
 
 
-def load_functions(function_file, functions):
+def load_functions(function_file, function):
     if function_file:
         with open(function_file) as f:
             functions = []
             for ln, line in enumerate(f):
                 if line.split('\t')[0] == "function": continue
                 functions.append(line.split('\t')[0].strip())
+    else:
+        functions = [function]
     print("Loaded functions")
     return functions
 
@@ -37,14 +40,15 @@ def make_word_function(args, fn_tree, function, wf):
             continue
         ex = {}
         if fn_tree.get_base_fn() == 'wiki':
+            ex['inputs'] = []
             for inp_num in range(len(word)):
-                ex['inputs'].append([word[inp_num].to_dict()])
+                ex['inputs'].append(word[inp_num].to_dict())
             if function.is_predicate:
                 related_words = [int(related_word) == 1 for related_word in related_words]
             else:
                 related_words = [w.to_dict() for w in related_words]
             ex['all_tgts'] = related_words
-            ex['inner_fns'] = {fn: [int(inner_word) == 1 if inner_word in ['0','1'] else inner_word.to_dict() for inner_word in inner_fn_words[fn]] for fn in inner_fn_words}
+            ex['inner_fns'] = {fn: [inner_word.to_dict() if type(inner_word) == WikidataEntity else str(inner_word) == '1' for inner_word in inner_fn_words[fn]] for fn in inner_fn_words}
         else:
             ex['inputs'] = [word]
             ex['all_tgts'] = list(related_words)
@@ -66,17 +70,27 @@ def make_seq_function(args, fn_tree, function, wf):
         fn_seqs = function(Xs)
         Ys = fn_seqs['out']
         inner_fn_outs = fn_seqs['inner']
-        Xs = [list(xs)[0] for xs in Xs]
-        Ys = [list(ys) for ys in Ys]
+        if type(function.element_fn) == GetWikiRelatedWords:
+            # hacky...
+            Xs = [list(xs)[0][0].to_dict() for xs in Xs]
+            Xs = {key: [xs[key] for xs in Xs] for key in Xs[0].keys()}
+            Ys = [[y.to_dict() for y in ys] for ys in Ys]
+            train_tgts = [random.choice(ys) for ys in Ys]
+            train_tgts = {key: [tgt[key] for tgt in train_tgts] for key in train_tgts[0].keys()}
+            inner_fns = {str(fn): [list(inner_fn_out)[0][0].to_dict() for inner_fn_out in inner_fn_outs[f]] for f, fn in enumerate(function.inner_fns)}
+        else:
+            Xs = [list(xs)[0] for xs in Xs]
+            inner_fns = {str(fn): [list(inner_fn_out) for inner_fn_out in inner_fn_outs[f]] for f, fn in enumerate(function.inner_fns)}
+            train_tgts = [[random.choice(ys) for ys in Ys]]
         wf.write(json.dumps({
-            "inputs": [Xs], "train_tgts": [[random.choice(ys) for ys in Ys]], "all_tgts": Ys,
-            "inner_fns": {str(fn): [list(inner_fn_out) for inner_fn_out in inner_fn_outs[f]] for f, fn in enumerate(function.inner_fns)},
+            "inputs": [Xs], "train_tgts": train_tgts, "all_tgts": Ys,
+            "inner_fns": inner_fns,
             "R": str(function), "nl_R": convert_relation_to_nl(relation_fn=function),
         })+"\n")
         wf.flush()
 
 
-def make_functions(args, functions):
+def make_functions(args, functions, make_splits=False):
     skipped_fns = []
     for f, function_nl in enumerate(functions):
         function_savefile = f"{args.save_dir}/{function_nl}.jsonl"
@@ -100,6 +114,7 @@ def make_functions(args, functions):
         else:
             raise NotImplementedError
         wf.close()
+    return skipped_fns
 
 
 def main(args):

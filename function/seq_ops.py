@@ -143,9 +143,9 @@ class Filter(SeqFunction):
         if inner_nl == "%S%":
             inner_nl = "word in %S%"
         element_nl = self.element_fn.to_nl().split('include')[0].strip()
-        if "which are" in inner_nl:
+        if "for which" in inner_nl:
             return f"{inner_nl} and {element_nl}"
-        return f"{inner_nl} which are {element_nl}"
+        return f"{inner_nl} for which {element_nl}"
 
     def __call__(self, seq):
         seq = self.compute_inner_fns(seq)

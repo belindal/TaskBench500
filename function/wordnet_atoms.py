@@ -109,7 +109,7 @@ class GetWNRelatedWords(WordFunction):
         if self.function == "is":
             full_attr_name = NL_ATTRIBUTE_NAMES[self.attr_name]
             full_attr_value = NL_ATTRIBUTE_VALUES[self.attr_name][self.attr_value]
-            return f"{inner_nl} is {full_attr_value} {full_attr_name}"
+            return f"{inner_nl} is {full_attr_value} {full_attr_name}".strip()
 
         # relations
         relation_nl = relation_nl_prefix[self.function]
