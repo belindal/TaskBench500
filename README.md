@@ -9,6 +9,7 @@ tar -xzvf TaskBenchData.tar.gz
 ```
 
 The file structure looks as follows:
+
     .
     ├── atomic                      # atomic tasks
     ├── seq_composite               # sequential compositional tasks
@@ -16,13 +17,13 @@ The file structure looks as follows:
     │   ├── map                     # tasks of the form map{λx.F(x)}(S)
     │   └── mapfilter               # tasks of the form map{λx.F(x)}(filter{λx.F(x)}(S))
     └── word_composite              # word-level compositional tasks
-        ├── chaining                # tasks of the form F'(F)
+        ├── chaining                # tasks of the form F(F')
         ├── intersection            # tasks of the form F∩F'
         ├── land                    # tasks of the form F∧F'
         ├── lor                     # tasks of the form F∨F'
         └── union                   # tasks of the form F∪F'
 
-where F and F' are arbitrary functions.
+where `F` and `F'` are arbitrary word-level functions.
 
 ## Dataset Creation Procedure
 Coming soon.
