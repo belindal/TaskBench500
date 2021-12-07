@@ -172,7 +172,7 @@ def parse_mapfilter_fn(fn_tree):
     map_input = None
     while len(curr_node.paren_children) > 0:
         if curr_node.get_base_fn() not in ['filter', 'map']:
-            import pdb; pdb.set_trace()
+            raise NotImplementedError, f"Only accepts sequential composition functions of `map` and `filter`, not {curr_node.get_base_fn()}"
         if curr_node.get_base_fn() in ['filter']:
             all_filter_fns.append(curr_node.brace_children[0])
             filter_input = curr_node.brace_children[0].paren_children

@@ -161,7 +161,7 @@ relation_nl_prefix = {
     "employer": "employer of",
     "employer[inv]": "someone employed at",
     "head of state": "head of state of",
-    "head of state[inv]": "state headed by", #???
+    "head of state[inv]": "state headed by",
     "position held": "position held by",
     "sex or gender": "sex or gender of",
     "developer": "developer of",
@@ -267,11 +267,10 @@ class GetWikiRelatedWords(WordFunction):
         """
         get_inners: get outputs of inner functions
         """
-        # TODO add langs other than english??
         variables = set()
         condition_toks = condition.split()
         for t, term in enumerate(condition_toks):
-            if term.startswith("?"): #and ("inp" in term or term == "?out"):
+            if term.startswith("?"):
                 variables.add(term)
 
         select_clause = []
@@ -331,24 +330,13 @@ WHERE {{
 {"GROUP BY" if len(group_by_inputs_clause) > 0 else ""} {group_by_inputs_clause}
 LIMIT {max_n_results}
         """
-        # TODO add order here?
         if not self.suppress_print:
             print(query)
         return query, ordered_input_variables
 
     def __call__(self, inputs: list=None):
-        # TODO `inner_fns`?
-        # related_ents, missing_ent_set = super().get_cached_words_results(inputs)
         assert len(inputs) == 1 and len(inputs[0]) == 1
         input_ents = list(inputs[0])[0]
-        # if self.all_samples is None:
-        #     self.get_samples()
-        # if False:  #self.all_samples is not None:
-        #     # inner_results = [query(ent) for query in self.inner_queries]
-        #     input_ent_tuple = tuple([input_ent.getId() for input_ent in inputs])
-        #     if input_ents in self.all_samples:
-        #         return self.all_samples[input_ents]
-        # TODO
         input_query = self.input_query_infos['query']
         inner_queries = self.inner_queries.copy()
         for entidx, input_ent in enumerate(input_ents):
@@ -370,7 +358,7 @@ LIMIT {max_n_results}
 
     def get_samples(self):
         # get samples
-        if self.all_samples is not None:  #and (not self.is_predicate and self.sample_query == self.input_query):
+        if self.all_samples is not None:
             return set(self.all_samples.keys())
         if self.is_predicate:
             wiki_results_dict_pos = self.get_query_results(self.pos_sample_query_infos['query'], self.pos_sample_query_infos['input_vars'], self.pos_sample_query_infos['var2fxn'])
@@ -378,8 +366,6 @@ LIMIT {max_n_results}
             wiki_results_dict = {**wiki_results_dict_pos, **wiki_results_dict_neg}
         else:
             wiki_results_dict = self.get_query_results(self.sample_query_infos['query'], self.sample_query_infos['input_vars'], self.sample_query_infos['var2fxn'])
-        # if self.sample_queries != self.input_queries:
-        #     return wiki_results_dict.keys()
         self.all_samples = wiki_results_dict
         return set(self.all_samples.keys())
     
@@ -465,10 +451,7 @@ def convert_fntree2query(fn_tree, query_options_flag="input"):#, get_inners:bool
     """
     query, out_var, var2fxn = _convert_fntree2query(fn_tree, var2fxn=[], query_options_flag=query_options_flag)
     query = query.replace(out_var, "?out")
-    try:
-        var2fxn[int(out_var.replace("?v", ""))] = str(fn_tree)
-    except:
-        import pdb; pdb.set_trace()
+    var2fxn[int(out_var.replace("?v", ""))] = str(fn_tree)
     return query, var2fxn
 
 
@@ -481,9 +464,6 @@ def _convert_fntree2query(fn_tree, var2fxn: list=[], query_options_flag="input")
     `query_options_flag`: this flag specifies which query to get
         Options: For predicates, can be `sample_pos`/`sample_neg`/`input`. For relations, can be `sample`/`input`.
     """
-    # returns query_clause, out_var
-    # TODO FIX!!!
-    # Write everything out explicitly as sentences, wth subjects...
     if len(fn_tree.paren_children) == 0:
         return "", f"%INPUT{str(fn_tree)}%" if query_options_flag == 'input' else f"?inp{str(fn_tree)}", var2fxn
     else:
@@ -568,13 +548,6 @@ def _convert_fntree2query(fn_tree, var2fxn: list=[], query_options_flag="input")
             assert len(fn_tree.paren_children) == 2
             inner_query_clause0, inner_out_var0, var2fxn = _convert_fntree2query(fn_tree.paren_children[0], var2fxn=var2fxn, query_options_flag=query_options_flag)
             inner_query_clause1, inner_out_var1, var2fxn = _convert_fntree2query(fn_tree.paren_children[1], var2fxn=var2fxn, query_options_flag=query_options_flag)
-            # if get_inners:
-            #     # TODO intermediate variables
-            #     import pdb; pdb.set_trace()
-            #     new_var = f"?v{len(var2fxn)}"
-            #     var2fxn.append(str(fn_tree))
-            # else:
-            # don't change output variable
             new_var = inner_out_var0
             inner_query_clause1 = inner_query_clause1.replace(inner_out_var1, inner_out_var0)
             return f"{inner_query_clause0} {inner_query_clause1}", new_var, var2fxn
@@ -587,16 +560,6 @@ def _convert_fntree2query(fn_tree, var2fxn: list=[], query_options_flag="input")
             condition_clause = f"{{ {inner_query_clause0.replace(inner_out_var0, new_var)} }}\nUNION\n{{ {inner_query_clause1.replace(inner_out_var1, new_var)} }}\n{inner_query_clause1} {inner_query_clause0}"
             # add new var to map
             var2fxn.append(str(fn_tree))
-            """
-            # if get_inners:
-            #     new_var = f"?v{len(var2fxn)}"
-            #     condition_clause = f"{{ {inner_query_clause0} OPTIONAL {{ {inner_query_clause1.replace(inner_out_var1, new_var)} }} }}\nUNION\n{{ {inner_query_clause1} OPTIONAL {{ {inner_query_clause0.replace(inner_out_var0, new_var)} }} }}"
-            #     var2fxn.append(str(fn_tree))
-            # else:
-            new_var = inner_out_var0
-            # condition_clause = f"{{ {inner_query_clause0} OPTIONAL {{ {inner_query_clause1.replace(inner_out_var1, new_var)} }} }}\nUNION\n{{ {inner_query_clause1.replace(inner_out_var1, new_var)} OPTIONAL {{ {inner_query_clause0} }} }}"
-            condition_clause = f"{{ {inner_query_clause0} }}\nUNION\n{{ {inner_query_clause1.replace(inner_out_var1, new_var)} }}"
-            # """
             return condition_clause, new_var, var2fxn
         elif fn_tree.get_base_fn() in GetWikiRelatedWords.rel_name2id:
             rel_id = GetWikiRelatedWords.rel_name2id[fn_tree.get_base_fn()]
@@ -640,7 +603,6 @@ LIMIT 2000
 # BIND( ?tmp1 = e:Q1486 as ?v0 ) . 
 # BIND( ?tmp2 = e:Q36180 as ?v1 ) .
 # BIND( ?v0 || ?v1 as ?out ) .
-    import pdb; pdb.set_trace()
 
     relations = ['occupation', 'sex or gender', 'date of birth', 'country', 'head of state', 'child', 'creator', 'instance of', 'subclass of']
     for relation in relations:
@@ -648,7 +610,6 @@ LIMIT 2000
         # results['e1']
         print(len(results))
         print(results[0])
-        import pdb; pdb.set_trace()
 
 def test_convert_fn_to_query():
     functions = [
