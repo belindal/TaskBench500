@@ -2,9 +2,10 @@
 The TaskBench500 dataset and code for generating tasks.
 
 ## Data
-The TaskBench dataset is available under
+The TaskBench dataset is currently available under https://www.dropbox.com/s/wxe0c4gv1y1e3h8/TaskBenchData.tar.gz?dl=0
+
+After downloading, expand with
 ```bash
-wget http://web.mit.edu/bzl/www/TaskBench500/TaskBenchData.tar.gz
 tar -xzvf TaskBenchData.tar.gz
 ```
 
