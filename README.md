@@ -2,11 +2,11 @@
 The TaskBench500 dataset and code for generating tasks.
 
 ## Data
-The TaskBench dataset is currently available under https://www.dropbox.com/s/wxe0c4gv1y1e3h8/TaskBenchData.tar.gz?dl=0
+The TaskBench dataset is currently available under https://www.dropbox.com/s/vrad0ppdf6hlsfp/taskbench500_orig.tar.gz?dl=0
 
 After downloading, expand with
 ```bash
-tar -xzvf TaskBenchData.tar.gz
+tar -xzvf taskbench500_orig.tar.gz
 ```
 
 The file structure looks as follows:
