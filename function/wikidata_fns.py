@@ -28,7 +28,7 @@ def set_backend(backend_url):
 logger = wdaccess_p['logger']
 logger.setLevel(logging.INFO)
 sparql = None
-set_backend(wdaccess_p.get('backend', "http://localhost:8890/sparql"))
+set_backend(wdaccess_p.get('backend', "http://128.30.64.44:8890/sparql"))
 GLOBAL_RESULT_LIMIT = wdaccess_p['global_result_limit']
 
 FILTER_RELATION_CLASSES = "qr"
@@ -126,8 +126,8 @@ class WikidataEntity:
         return {"Qid": self.Qid, "ent_name": self.ent_name}
     
     @classmethod
-    def from_dict(self, dict):
-        return WikidataEntity(**json_dict)
+    def from_dict(self, input_dict):
+        return WikidataEntity(**input_dict)
 
     def getId(self):
         return self.Qid

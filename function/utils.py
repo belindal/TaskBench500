@@ -2,6 +2,29 @@ import os
 from function import Function
 
 
+def recursive_apply_str_func(collection, str_function):
+    # convert all underscores to spaces, recursively accessing collections
+    if type(collection) == str:
+        return str_function(collection)
+    elif type(collection) == bool:
+        return collection
+    if type(collection) == list:
+        new_collection = []
+        for item in collection:
+            new_collection.append(recursive_apply_str_func(item, str_function))
+    elif type(collection) == dict:
+        new_collection = {}
+        for k in collection:
+            new_collection[k] = recursive_apply_str_func(collection[k], str_function)
+    elif type(collection) == set:
+        new_collection = set()
+        for item in collection:
+            new_collection.add(recursive_apply_str_func(item, str_function))
+    else:
+        raise TypeError(f"Input collection is of unknown type: {type(collection)}")
+    return new_collection
+
+
 class FunctionNode:
     """
     Data structure for storing components of functions
@@ -172,7 +195,7 @@ def parse_mapfilter_fn(fn_tree):
     map_input = None
     while len(curr_node.paren_children) > 0:
         if curr_node.get_base_fn() not in ['filter', 'map']:
-            raise NotImplementedError, f"Only accepts sequential composition functions of `map` and `filter`, not {curr_node.get_base_fn()}"
+            raise NotImplementedError(f"Only accepts sequential composition functions of `map` and `filter`, not {curr_node.get_base_fn()}")
         if curr_node.get_base_fn() in ['filter']:
             all_filter_fns.append(curr_node.brace_children[0])
             filter_input = curr_node.brace_children[0].paren_children
